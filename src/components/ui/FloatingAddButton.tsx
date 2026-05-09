@@ -7,7 +7,7 @@ export function FloatingAddButton({ onClick }: { onClick: () => void }) {
     <Button
       onClick={onClick}
       size="icon"
-      className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg md:hidden"
+      className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg hidden"
     >
       <Plus size={24} />
     </Button>

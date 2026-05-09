@@ -31,7 +31,8 @@ interface StatusTabsProps {
 
 export function StatusTabs({ active, onChange, counts }: StatusTabsProps) {
   return (
-    <div className="flex gap-2 overflow-x-auto rounded-2xl bg-white/60 backdrop-blur-sm border border-purple-100 p-1.5 shadow-sm">
+    <div className="overflow-x-auto">
+      <div className="flex gap-2 rounded-2xl bg-white/60 backdrop-blur-sm border border-purple-100 p-1.5 shadow-sm w-max min-w-full">
       {tabs.map(tab => (
         <button
           key={tab.status}
@@ -56,6 +57,7 @@ export function StatusTabs({ active, onChange, counts }: StatusTabsProps) {
           </span>
         </button>
       ))}
+      </div>
     </div>
   )
 }

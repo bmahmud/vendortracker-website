@@ -63,9 +63,10 @@ export function CompanyDashboard() {
             Manage your vendor relationships in one place
           </p>
         </div>
-        <Button onClick={openAdd} className="hidden gap-2 md:flex">
+        <Button onClick={openAdd} className="flex gap-2">
           <Plus size={16} />
-          Add Company
+          <span className="hidden sm:inline">Add Company</span>
+          <span className="sm:hidden">Add</span>
         </Button>
       </div>
 
