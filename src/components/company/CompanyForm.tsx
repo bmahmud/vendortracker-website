@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -73,8 +73,10 @@ export function CompanyForm({ defaultValues, onSubmit, isSubmitting }: CompanyFo
   const status = form.watch('status')
   const isHired = status === 'hired'
 
-  // Reset category when status changes — categories are per-list
+  // Reset category only when user actively changes status (not on initial mount)
+  const statusMountedRef = useRef(false)
   useEffect(() => {
+    if (!statusMountedRef.current) { statusMountedRef.current = true; return }
     form.setValue('category_id', null)
   }, [status]) // eslint-disable-line react-hooks/exhaustive-deps
 

@@ -1,10 +1,10 @@
 'use client'
 import Image from 'next/image'
-import { Phone, MapPin, Globe, Pencil, Trash2, Building2, CheckCircle2, XCircle, HelpCircle, Tag } from 'lucide-react'
+import { Phone, MapPin, Globe, Pencil, Trash2, Building2, CheckCircle2, XCircle, HelpCircle, Tag, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { StarRating } from '@/components/ui/StarRating'
 import { getImagePublicUrl } from '@/lib/api/images'
-import { parseLinkBlock, formatDate, cn } from '@/lib/utils'
+import { parseLinkBlock, formatDate, getHostname, cn } from '@/lib/utils'
 import type { Company } from '@/types'
 
 const borderAccent: Record<string, string> = {
@@ -32,7 +32,7 @@ interface CompanyCardProps {
 }
 
 export function CompanyCard({ company, onEdit, onDelete }: CompanyCardProps) {
-  const { links } = parseLinkBlock(company.notes)
+  const { links, freeText: notesText } = parseLinkBlock(company.notes)
   const firstImage = company.company_images?.[0]
   const imageUrl = firstImage ? getImagePublicUrl(firstImage.storage_path) : null
   const willHire = company.will_hire_again ? willHireConfig[company.will_hire_again] : null
@@ -62,8 +62,16 @@ export function CompanyCard({ company, onEdit, onDelete }: CompanyCardProps) {
           )}
         </div>
 
+        {/* Notes */}
+        {notesText && (
+          <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
+            <FileText size={12} className="mt-0.5 shrink-0" />
+            <p className="line-clamp-2 italic">{notesText}</p>
+          </div>
+        )}
+
         {/* Contact details */}
-        {(company.contact_name || company.telephone || company.address) && (
+        {(company.contact_name || company.telephone || company.address || company.website_url) && (
           <div className="space-y-1">
             {company.contact_name && (
               <p className="text-sm font-medium">{company.contact_name}</p>
@@ -78,6 +86,19 @@ export function CompanyCard({ company, onEdit, onDelete }: CompanyCardProps) {
               <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <MapPin size={12} />
                 <span className="truncate">{company.address}</span>
+              </div>
+            )}
+            {company.website_url && (
+              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <Globe size={12} />
+                <a
+                  href={company.website_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="truncate hover:text-primary transition-colors"
+                >
+                  {getHostname(company.website_url)}
+                </a>
               </div>
             )}
           </div>
@@ -113,19 +134,8 @@ export function CompanyCard({ company, onEdit, onDelete }: CompanyCardProps) {
 
         <div className="flex-1" />
 
-        {/* Bottom row: links + actions */}
+        {/* Bottom row: additional links + actions */}
         <div className="flex items-center gap-2 border-t border-border pt-2">
-          {company.website_url && (
-            <a
-              href={company.website_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              title="Website"
-              className="text-muted-foreground transition-colors hover:text-primary"
-            >
-              <Globe size={15} />
-            </a>
-          )}
           {links.slice(0, 3).map((l, i) => (
             <a
               key={i}

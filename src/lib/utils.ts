@@ -41,6 +41,11 @@ export function formatDate(dateStr: string | null): string {
   })
 }
 
+export function getHostname(url: string): string {
+  try { return new URL(url).hostname.replace(/^www\./, '') }
+  catch { return url }
+}
+
 export function getStatusLabel(status: string): string {
   const labels: Record<string, string> = {
     hired: 'Already Hired',
