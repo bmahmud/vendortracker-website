@@ -11,7 +11,7 @@ const tabs: { status: CompanyStatus; label: string; activeClass: string; activeB
   },
   {
     status: 'to_hire',
-    label: 'To Hire',
+    label: 'Potential Hire',
     activeClass: 'bg-blue-500 text-white shadow-md shadow-blue-200',
     activeBadge: 'bg-white/25 text-white',
   },

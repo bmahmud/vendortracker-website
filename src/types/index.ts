@@ -22,6 +22,7 @@ export interface Company {
   work_rating: number | null
   will_hire_again: WillHireAgain | null
   website_url: string | null
+  price: string | null
   notes: string | null
   created_at: string
   updated_at: string
@@ -44,6 +45,7 @@ export interface CompanyFormValues {
   work_rating: number | null
   will_hire_again: WillHireAgain | ''
   website_url: string
+  price: string
   freeNotes: string
   links: LinkItem[]
 }

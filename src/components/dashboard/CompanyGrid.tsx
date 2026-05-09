@@ -5,7 +5,7 @@ import type { Company, CompanyStatus } from '@/types'
 
 const emptyMessages: Record<CompanyStatus, string> = {
   hired: 'No companies hired yet. Add your first one!',
-  to_hire: 'Your "To Hire" list is empty. Add some prospects.',
+  to_hire: 'Your "Potential Hire" list is empty. Add some prospects.',
   do_not_hire: 'No companies on your do-not-hire list.',
 }
 

@@ -1,6 +1,6 @@
 'use client'
 import Image from 'next/image'
-import { Phone, MapPin, Globe, Pencil, Trash2, Building2, CheckCircle2, XCircle, HelpCircle } from 'lucide-react'
+import { Phone, MapPin, Globe, Pencil, Trash2, Building2, CheckCircle2, XCircle, HelpCircle, Tag } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { StarRating } from '@/components/ui/StarRating'
 import { getImagePublicUrl } from '@/lib/api/images'
@@ -80,6 +80,14 @@ export function CompanyCard({ company, onEdit, onDelete }: CompanyCardProps) {
                 <span className="truncate">{company.address}</span>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Price / Quote */}
+        {company.price && (
+          <div className="flex items-center gap-1.5 text-sm font-semibold text-violet-700">
+            <Tag size={13} />
+            {company.price}
           </div>
         )}
 

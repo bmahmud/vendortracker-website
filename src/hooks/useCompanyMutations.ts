@@ -20,6 +20,7 @@ function buildPayload(values: CompanyFormValues) {
     work_rating: isHired && values.work_rating ? values.work_rating : null,
     will_hire_again: isHired && values.will_hire_again ? (values.will_hire_again as WillHireAgain) : null,
     website_url: values.website_url || null,
+    price: values.price || null,
     notes: notes || null,
   }
 }

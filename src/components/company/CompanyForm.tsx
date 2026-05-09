@@ -24,6 +24,7 @@ const schema = z.object({
   work_rating: z.number().min(1).max(5).nullable().default(null),
   will_hire_again: z.enum(['yes', 'no', 'maybe', '']).default(''),
   website_url: z.string().default(''),
+  price: z.string().default(''),
   freeNotes: z.string().default(''),
   links: z.array(z.object({ url: z.string(), label: z.string() })).default([]),
 })
@@ -60,6 +61,7 @@ export function CompanyForm({ defaultValues, onSubmit, isSubmitting }: CompanyFo
       work_rating: defaultValues?.work_rating ?? null,
       will_hire_again: defaultValues?.will_hire_again ?? '',
       website_url: defaultValues?.website_url ?? '',
+      price: defaultValues?.price ?? '',
       freeNotes: parsed.freeText,
       links: parsed.links,
     },
@@ -80,13 +82,18 @@ export function CompanyForm({ defaultValues, onSubmit, isSubmitting }: CompanyFo
       </div>
 
       {/* Status */}
-      <div className="space-y-1.5">
-        <Label htmlFor="status">Status *</Label>
+      <div className={cn('space-y-1.5 rounded-lg p-3', defaultValues ? 'border border-violet-200 bg-violet-50' : '')}>
+        <Label htmlFor="status">
+          {defaultValues ? 'Move to List' : 'Status *'}
+        </Label>
         <select id="status" {...form.register('status')} className={selectClass}>
-          <option value="to_hire">To Hire</option>
+          <option value="to_hire">Potential Hire</option>
           <option value="hired">Already Hired</option>
           <option value="do_not_hire">Do Not Hire</option>
         </select>
+        {defaultValues && (
+          <p className="text-xs text-violet-600">Change this to move the company to a different list.</p>
+        )}
       </div>
 
       {/* Contact + Phone */}
@@ -133,6 +140,16 @@ export function CompanyForm({ defaultValues, onSubmit, isSubmitting }: CompanyFo
           {...form.register('website_url')}
           placeholder="https://company.com"
           type="url"
+        />
+      </div>
+
+      {/* Price / Quote */}
+      <div className="space-y-1.5">
+        <Label htmlFor="price">Price / Quote</Label>
+        <Input
+          id="price"
+          {...form.register('price')}
+          placeholder="e.g. $500, £1,200/month, $75/hr"
         />
       </div>
 
