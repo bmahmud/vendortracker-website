@@ -1,6 +1,11 @@
 'use client'
-import { Loader2, PackageSearch } from 'lucide-react'
+import { useState } from 'react'
+import { Loader2, PackageSearch, Pencil, Trash2, Check, X } from 'lucide-react'
+import { toast } from 'sonner'
 import { CompanyCard } from '@/components/company/CompanyCard'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { updateCategory, deleteCategory } from '@/lib/api/categories'
 import type { Company, CompanyStatus } from '@/types'
 
 const emptyMessages: Record<CompanyStatus, string> = {
@@ -21,15 +26,119 @@ const badgeColors: Record<CompanyStatus, string> = {
   do_not_hire: 'bg-rose-100 text-rose-700',
 }
 
+interface CategoryHeaderProps {
+  categoryKey: string
+  name: string
+  count: number
+  status: CompanyStatus
+  onRefresh: () => void
+}
+
+function CategoryHeader({ categoryKey, name, count, status, onRefresh }: CategoryHeaderProps) {
+  const [editing, setEditing] = useState(false)
+  const [editName, setEditName] = useState(name)
+  const [saving, setSaving] = useState(false)
+
+  const isReal = categoryKey !== '__none__'
+
+  async function handleRename() {
+    const trimmed = editName.trim()
+    if (!trimmed || trimmed === name) { setEditing(false); return }
+    setSaving(true)
+    try {
+      await updateCategory(categoryKey, trimmed)
+      toast.success(`Category renamed to "${trimmed}"`)
+      onRefresh()
+      setEditing(false)
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to rename category')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleDelete() {
+    if (count > 0) {
+      toast.error(`Remove all ${count} ${count === 1 ? 'company' : 'companies'} from "${name}" before deleting it`)
+      return
+    }
+    try {
+      await deleteCategory(categoryKey)
+      toast.success(`Category "${name}" deleted`)
+      onRefresh()
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to delete category')
+    }
+  }
+
+  return (
+    <div className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${headerColors[status]}`}>
+      {editing ? (
+        <>
+          <Input
+            value={editName}
+            onChange={e => setEditName(e.target.value)}
+            className="h-7 flex-1 text-sm bg-white/80"
+            onKeyDown={e => {
+              if (e.key === 'Enter') { e.preventDefault(); handleRename() }
+              if (e.key === 'Escape') { setEditing(false); setEditName(name) }
+            }}
+            autoFocus
+            disabled={saving}
+          />
+          <Button type="button" size="icon" className="h-7 w-7 shrink-0" onClick={handleRename} disabled={saving}>
+            <Check size={13} />
+          </Button>
+          <Button type="button" size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => { setEditing(false); setEditName(name) }}>
+            <X size={13} />
+          </Button>
+        </>
+      ) : (
+        <>
+          <span className="text-sm font-semibold">{name}</span>
+          <span className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-bold ${badgeColors[status]}`}>
+            {count}
+          </span>
+          {isReal && (
+            <>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className="ml-auto h-6 w-6 shrink-0 opacity-60 hover:opacity-100"
+                onClick={() => { setEditing(true); setEditName(name) }}
+                title="Rename category"
+              >
+                <Pencil size={12} />
+              </Button>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className="h-6 w-6 shrink-0 opacity-60 hover:opacity-100 hover:text-destructive"
+                onClick={handleDelete}
+                title="Delete category"
+              >
+                <Trash2 size={12} />
+              </Button>
+            </>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
 interface CompanyGridProps {
   companies: Company[]
   loading: boolean
   status: CompanyStatus
   onEdit: (company: Company) => void
   onDelete: (company: Company) => void
+  onRefresh: () => void
 }
 
-export function CompanyGrid({ companies, loading, status, onEdit, onDelete }: CompanyGridProps) {
+export function CompanyGrid({ companies, loading, status, onEdit, onDelete, onRefresh }: CompanyGridProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -59,7 +168,6 @@ export function CompanyGrid({ companies, loading, status, onEdit, onDelete }: Co
     )
   }
 
-  // Build groups: keyed by category_id (or '__none__' for uncategorized)
   const groupMap = new Map<string, { name: string; companies: Company[] }>()
 
   for (const company of companies) {
@@ -69,7 +177,6 @@ export function CompanyGrid({ companies, loading, status, onEdit, onDelete }: Co
     groupMap.get(key)!.companies.push(company)
   }
 
-  // Sort: named categories alphabetically, uncategorized last
   const groups = [...groupMap.entries()].sort(([a, ga], [b, gb]) => {
     if (a === '__none__') return 1
     if (b === '__none__') return -1
@@ -80,12 +187,13 @@ export function CompanyGrid({ companies, loading, status, onEdit, onDelete }: Co
     <div className="space-y-6">
       {groups.map(([key, group]) => (
         <div key={key} className="space-y-3">
-          <div className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${headerColors[status]}`}>
-            <span className="text-sm font-semibold">{group.name}</span>
-            <span className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-bold ${badgeColors[status]}`}>
-              {group.companies.length}
-            </span>
-          </div>
+          <CategoryHeader
+            categoryKey={key}
+            name={group.name}
+            count={group.companies.length}
+            status={status}
+            onRefresh={onRefresh}
+          />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {group.companies.map(company => (
               <CompanyCard key={company.id} company={company} onEdit={() => onEdit(company)} onDelete={() => onDelete(company)} />

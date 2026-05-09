@@ -80,6 +80,7 @@ export function CompanyDashboard() {
         status={activeStatus}
         onEdit={openEdit}
         onDelete={setDeleteTarget}
+        onRefresh={handleSuccess}
       />
 
       {/* Add/Edit modal */}

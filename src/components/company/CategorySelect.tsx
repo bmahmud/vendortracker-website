@@ -59,6 +59,7 @@ export function CategorySelect({ status, value, onChange }: CategorySelectProps)
       onChange(cat.id)
       setNewName('')
       setCreating(false)
+      toast.success(`Category "${cat.name}" created`)
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to create category')
     } finally {
