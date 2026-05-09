@@ -56,7 +56,9 @@ export function CompanyDashboard() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">VendorTracker</h1>
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+            VendorTracker
+          </h1>
           <p className="mt-0.5 text-sm text-muted-foreground">
             Manage your vendor relationships in one place
           </p>

@@ -8,9 +8,15 @@ import { parseLinkBlock, formatDate, cn } from '@/lib/utils'
 import type { Company } from '@/types'
 
 const borderAccent: Record<string, string> = {
-  hired: 'border-l-green-500',
+  hired: 'border-l-emerald-500',
   to_hire: 'border-l-blue-500',
-  do_not_hire: 'border-l-red-500',
+  do_not_hire: 'border-l-rose-500',
+}
+
+const bannerBg: Record<string, string> = {
+  hired: 'bg-emerald-50',
+  to_hire: 'bg-blue-50',
+  do_not_hire: 'bg-rose-50',
 }
 
 const willHireConfig = {
@@ -39,11 +45,11 @@ export function CompanyCard({ company, onEdit, onDelete }: CompanyCardProps) {
       )}
     >
       {/* Image banner */}
-      <div className="relative flex h-36 items-center justify-center overflow-hidden rounded-t-xl bg-muted">
+      <div className={cn('relative flex h-36 items-center justify-center overflow-hidden rounded-t-xl', imageUrl ? 'bg-muted' : bannerBg[company.status])}>
         {imageUrl ? (
           <Image src={imageUrl} alt={company.name} fill className="object-cover" />
         ) : (
-          <Building2 size={44} className="text-muted-foreground/20" />
+          <Building2 size={44} className="opacity-25 text-current" />
         )}
       </div>
 

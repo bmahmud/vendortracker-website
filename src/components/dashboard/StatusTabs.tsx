@@ -2,29 +2,26 @@
 import { cn } from '@/lib/utils'
 import type { CompanyStatus, StatusCounts } from '@/types'
 
-const tabs: { status: CompanyStatus; label: string; activeClass: string }[] = [
+const tabs: { status: CompanyStatus; label: string; activeClass: string; activeBadge: string }[] = [
   {
     status: 'hired',
     label: 'Already Hired',
-    activeClass: 'border-b-2 border-green-500 text-green-700 font-semibold',
+    activeClass: 'bg-emerald-500 text-white shadow-md shadow-emerald-200',
+    activeBadge: 'bg-white/25 text-white',
   },
   {
     status: 'to_hire',
     label: 'To Hire',
-    activeClass: 'border-b-2 border-blue-500 text-blue-700 font-semibold',
+    activeClass: 'bg-blue-500 text-white shadow-md shadow-blue-200',
+    activeBadge: 'bg-white/25 text-white',
   },
   {
     status: 'do_not_hire',
     label: 'Do Not Hire',
-    activeClass: 'border-b-2 border-red-500 text-red-700 font-semibold',
+    activeClass: 'bg-rose-500 text-white shadow-md shadow-rose-200',
+    activeBadge: 'bg-white/25 text-white',
   },
 ]
-
-const countColor: Record<CompanyStatus, string> = {
-  hired: 'bg-green-100 text-green-700',
-  to_hire: 'bg-blue-100 text-blue-700',
-  do_not_hire: 'bg-red-100 text-red-700',
-}
 
 interface StatusTabsProps {
   active: CompanyStatus
@@ -34,24 +31,24 @@ interface StatusTabsProps {
 
 export function StatusTabs({ active, onChange, counts }: StatusTabsProps) {
   return (
-    <div className="flex border-b border-border overflow-x-auto">
+    <div className="flex gap-2 overflow-x-auto rounded-2xl bg-white/60 backdrop-blur-sm border border-purple-100 p-1.5 shadow-sm">
       {tabs.map(tab => (
         <button
           key={tab.status}
           onClick={() => onChange(tab.status)}
           className={cn(
-            'flex shrink-0 items-center gap-2 px-4 py-3 text-sm transition-colors',
+            'flex shrink-0 items-center gap-2 px-5 py-2 text-sm font-medium rounded-xl transition-all duration-200',
             active === tab.status
               ? tab.activeClass
-              : 'border-b-2 border-transparent text-muted-foreground hover:text-foreground',
+              : 'text-muted-foreground hover:text-foreground hover:bg-purple-50',
           )}
         >
           {tab.label}
           <span
             className={cn(
-              'inline-flex items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-bold',
+              'inline-flex items-center justify-center rounded-full min-w-[20px] h-5 px-1.5 text-xs font-bold',
               active === tab.status
-                ? countColor[tab.status]
+                ? tab.activeBadge
                 : 'bg-muted text-muted-foreground',
             )}
           >
