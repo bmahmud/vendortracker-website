@@ -21,6 +21,7 @@ function buildPayload(values: CompanyFormValues) {
     will_hire_again: isHired && values.will_hire_again ? (values.will_hire_again as WillHireAgain) : null,
     website_url: values.website_url || null,
     price: values.price || null,
+    category_id: values.category_id ?? null,
     notes: notes || null,
   }
 }

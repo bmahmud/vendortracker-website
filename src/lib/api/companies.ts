@@ -4,7 +4,7 @@ import type { Company, CompanyStatus, StatusCounts } from '@/types'
 export async function getCompaniesByStatus(status: CompanyStatus): Promise<Company[]> {
   const { data, error } = await supabase
     .from('companies')
-    .select('*, company_images(*)')
+    .select('*, company_images(*), category:categories(id, name)')
     .eq('status', status)
     .order('created_at', { ascending: false })
   if (error) throw new Error(error.message)
@@ -26,7 +26,7 @@ export async function createCompany(payload: Partial<Company>): Promise<Company>
   const { data, error } = await supabase
     .from('companies')
     .insert({ ...payload, user_id: null })
-    .select('*, company_images(*)')
+    .select('*, company_images(*), category:categories(id, name)')
     .single()
   if (error) throw new Error(error.message)
   return data as Company
@@ -37,7 +37,7 @@ export async function updateCompany(id: string, payload: Partial<Company>): Prom
     .from('companies')
     .update({ ...payload, updated_at: new Date().toISOString() })
     .eq('id', id)
-    .select('*, company_images(*)')
+    .select('*, company_images(*), category:categories(id, name)')
     .single()
   if (error) throw new Error(error.message)
   return data as Company

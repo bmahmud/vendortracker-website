@@ -1,6 +1,13 @@
 export type CompanyStatus = 'hired' | 'to_hire' | 'do_not_hire'
 export type WillHireAgain = 'yes' | 'no' | 'maybe'
 
+export interface Category {
+  id: string
+  name: string
+  status: CompanyStatus
+  created_at: string
+}
+
 export interface CompanyImage {
   id: string
   company_id: string
@@ -23,6 +30,8 @@ export interface Company {
   will_hire_again: WillHireAgain | null
   website_url: string | null
   price: string | null
+  category_id: string | null
+  category: { id: string; name: string } | null
   notes: string | null
   created_at: string
   updated_at: string
@@ -46,6 +55,7 @@ export interface CompanyFormValues {
   will_hire_again: WillHireAgain | ''
   website_url: string
   price: string
+  category_id: string | null
   freeNotes: string
   links: LinkItem[]
 }

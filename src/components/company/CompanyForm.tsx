@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { StarRating } from '@/components/ui/StarRating'
 import { LinkBuilder } from './LinkBuilder'
 import { ImageUploader } from './ImageUploader'
+import { CategorySelect } from './CategorySelect'
 import { parseLinkBlock, cn } from '@/lib/utils'
 import type { Company, CompanyFormValues, CompanyImage } from '@/types'
 
@@ -25,6 +26,7 @@ const schema = z.object({
   will_hire_again: z.enum(['yes', 'no', 'maybe', '']).default(''),
   website_url: z.string().default(''),
   price: z.string().default(''),
+  category_id: z.string().nullable().default(null),
   freeNotes: z.string().default(''),
   links: z.array(z.object({ url: z.string(), label: z.string() })).default([]),
 })
@@ -62,6 +64,7 @@ export function CompanyForm({ defaultValues, onSubmit, isSubmitting }: CompanyFo
       will_hire_again: defaultValues?.will_hire_again ?? '',
       website_url: defaultValues?.website_url ?? '',
       price: defaultValues?.price ?? '',
+      category_id: defaultValues?.category_id ?? null,
       freeNotes: parsed.freeText,
       links: parsed.links,
     },
@@ -69,6 +72,11 @@ export function CompanyForm({ defaultValues, onSubmit, isSubmitting }: CompanyFo
 
   const status = form.watch('status')
   const isHired = status === 'hired'
+
+  // Reset category when status changes — categories are per-list
+  useEffect(() => {
+    form.setValue('category_id', null)
+  }, [status]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <form onSubmit={form.handleSubmit(v => onSubmit(v, pendingFiles))} className="space-y-4">
@@ -94,6 +102,16 @@ export function CompanyForm({ defaultValues, onSubmit, isSubmitting }: CompanyFo
         {defaultValues && (
           <p className="text-xs text-violet-600">Change this to move the company to a different list.</p>
         )}
+      </div>
+
+      {/* Category */}
+      <div className="space-y-1.5">
+        <Label>Category</Label>
+        <CategorySelect
+          status={status}
+          value={form.watch('category_id')}
+          onChange={id => form.setValue('category_id', id)}
+        />
       </div>
 
       {/* Contact + Phone */}
