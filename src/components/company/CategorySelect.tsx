@@ -30,10 +30,17 @@ export function CategorySelect({ status, value, onChange }: CategorySelectProps)
   const [loading, setLoading] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    getAllCategories().then(setCategories).catch(() => {})
+    getAllCategories()
+      .then(data => { setCategories(data); setFetchError(null) })
+      .catch(e => {
+        const msg = e instanceof Error ? e.message : 'Failed to load categories'
+        setFetchError(msg)
+        console.error('[CategorySelect] getAllCategories failed:', msg)
+      })
   }, [])
 
   useEffect(() => {
@@ -101,6 +108,11 @@ export function CategorySelect({ status, value, onChange }: CategorySelectProps)
 
   return (
     <div className="space-y-2">
+      {fetchError && (
+        <p className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
+          ⚠ DB error: {fetchError}
+        </p>
+      )}
       <div className="flex gap-2">
         <select
           value={creating ? CREATE_NEW : (value ?? '')}
