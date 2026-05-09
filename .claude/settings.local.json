@@ -5,7 +5,8 @@
       "Bash(Select-Object FullName, PSIsContainer)",
       "Bash(ConvertTo-Csv -NoTypeInformation)",
       "Bash(Out-String)",
-      "WebFetch(domain:claude.ai)"
+      "WebFetch(domain:claude.ai)",
+      "Bash(npm install *)"
     ]
   }
 }
