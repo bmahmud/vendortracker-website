@@ -14,9 +14,9 @@ const borderAccent: Record<string, string> = {
 }
 
 const bannerBg: Record<string, string> = {
-  hired: 'bg-emerald-50',
-  to_hire: 'bg-blue-50',
-  do_not_hire: 'bg-rose-50',
+  hired: 'bg-gradient-to-br from-emerald-100 to-emerald-50',
+  to_hire: 'bg-gradient-to-br from-blue-100 to-blue-50',
+  do_not_hire: 'bg-gradient-to-br from-rose-100 to-rose-50',
 }
 
 const willHireConfig = {
@@ -40,12 +40,14 @@ export function CompanyCard({ company, onEdit, onDelete }: CompanyCardProps) {
   return (
     <div
       className={cn(
-        'flex flex-col rounded-xl border border-l-4 bg-card shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5',
+        'flex flex-col rounded-2xl border border-l-4 backdrop-blur-md',
+        'bg-white/80 border-white/60',
+        'shadow-md transition-all duration-200 hover:shadow-xl hover:-translate-y-1 hover:bg-white/90',
         borderAccent[company.status],
       )}
     >
       {/* Image banner */}
-      <div className={cn('relative flex h-36 items-center justify-center overflow-hidden rounded-t-xl', imageUrl ? 'bg-muted' : bannerBg[company.status])}>
+      <div className={cn('relative flex h-36 items-center justify-center overflow-hidden rounded-t-xl', imageUrl ? 'bg-black/5' : bannerBg[company.status])}>
         {imageUrl ? (
           <Image src={imageUrl} alt={company.name} fill className="object-cover" />
         ) : (
@@ -135,7 +137,7 @@ export function CompanyCard({ company, onEdit, onDelete }: CompanyCardProps) {
         <div className="flex-1" />
 
         {/* Bottom row: additional links + actions */}
-        <div className="flex items-center gap-2 border-t border-border pt-2">
+        <div className="flex items-center gap-2 border-t border-white/50 pt-2">
           {links.slice(0, 3).map((l, i) => (
             <a
               key={i}
