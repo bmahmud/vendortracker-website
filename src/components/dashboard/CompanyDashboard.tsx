@@ -54,16 +54,20 @@ export function CompanyDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
             VendorTracker
           </h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground">
             Manage your vendor relationships in one place
           </p>
         </div>
-        <Button onClick={openAdd} className="flex gap-2">
+        <Button
+          onClick={openAdd}
+          className="flex shrink-0 gap-2 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white border-orange-500 shadow-md shadow-orange-200 transition-all duration-200 hover:shadow-lg hover:shadow-orange-200 cursor-pointer"
+          aria-label="Add a new company"
+        >
           <Plus size={16} />
           <span className="hidden sm:inline">Add Company</span>
           <span className="sm:hidden">Add</span>

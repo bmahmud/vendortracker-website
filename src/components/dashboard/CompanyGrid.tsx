@@ -105,9 +105,9 @@ function CategoryHeader({ categoryKey, name, count, status, onRefresh }: Categor
                 type="button"
                 size="icon"
                 variant="ghost"
-                className="ml-auto h-6 w-6 shrink-0 opacity-60 hover:opacity-100"
+                className="ml-auto h-6 w-6 shrink-0 cursor-pointer opacity-60 hover:opacity-100 transition-opacity duration-150"
                 onClick={() => { setEditing(true); setEditName(name) }}
-                title="Rename category"
+                aria-label={`Rename category ${name}`}
               >
                 <Pencil size={12} />
               </Button>
@@ -115,9 +115,9 @@ function CategoryHeader({ categoryKey, name, count, status, onRefresh }: Categor
                 type="button"
                 size="icon"
                 variant="ghost"
-                className="h-6 w-6 shrink-0 opacity-60 hover:opacity-100 hover:text-destructive"
+                className="h-6 w-6 shrink-0 cursor-pointer opacity-60 hover:opacity-100 hover:text-destructive transition-opacity duration-150"
                 onClick={handleDelete}
-                title="Delete category"
+                aria-label={`Delete category ${name}`}
               >
                 <Trash2 size={12} />
               </Button>

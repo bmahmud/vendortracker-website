@@ -40,7 +40,7 @@ export function CompanyCard({ company, onEdit, onDelete }: CompanyCardProps) {
   return (
     <div
       className={cn(
-        'flex flex-col rounded-xl border border-l-4 bg-card shadow-sm transition-shadow hover:shadow-md',
+        'flex flex-col rounded-xl border border-l-4 bg-card shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5',
         borderAccent[company.status],
       )}
     >
@@ -149,14 +149,21 @@ export function CompanyCard({ company, onEdit, onDelete }: CompanyCardProps) {
             </a>
           ))}
           <div className="flex-1" />
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onEdit}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 cursor-pointer"
+            onClick={onEdit}
+            aria-label={`Edit ${company.name}`}
+          >
             <Pencil size={14} />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-destructive hover:text-destructive"
+            className="h-7 w-7 cursor-pointer text-destructive hover:text-destructive"
             onClick={onDelete}
+            aria-label={`Delete ${company.name}`}
           >
             <Trash2 size={14} />
           </Button>
