@@ -1,4 +1,5 @@
 export type CompanyStatus = 'hired' | 'to_hire' | 'do_not_hire'
+export type ActiveStatus = CompanyStatus | 'all'
 export type WillHireAgain = 'yes' | 'no' | 'maybe'
 
 export interface Category {

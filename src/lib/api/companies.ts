@@ -1,12 +1,13 @@
 import { supabase } from '@/lib/supabase/client'
 import type { Company, CompanyStatus, StatusCounts } from '@/types'
 
-export async function getCompaniesByStatus(status: CompanyStatus): Promise<Company[]> {
-  const { data, error } = await supabase
+export async function getCompaniesByStatus(status: CompanyStatus | 'all'): Promise<Company[]> {
+  let query = supabase
     .from('companies')
     .select('*, company_images(*), category:categories(id, name)')
-    .eq('status', status)
     .order('created_at', { ascending: false })
+  if (status !== 'all') query = query.eq('status', status)
+  const { data, error } = await query
   if (error) throw new Error(error.message)
   return (data ?? []) as Company[]
 }

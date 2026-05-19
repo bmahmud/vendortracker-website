@@ -1,9 +1,9 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { getCompaniesByStatus, getAllStatusCounts } from '@/lib/api/companies'
-import type { Company, CompanyStatus, StatusCounts } from '@/types'
+import type { Company, ActiveStatus, StatusCounts } from '@/types'
 
-export function useCompanies(status: CompanyStatus) {
+export function useCompanies(status: ActiveStatus) {
   const [companies, setCompanies] = useState<Company[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
