@@ -4,7 +4,6 @@ import {
   X, Phone, MapPin, Globe, Tag, Pencil, Trash2,
   ExternalLink, CheckCircle2, XCircle, HelpCircle,
 } from 'lucide-react'
-import { motion, AnimatePresence } from 'motion/react'
 import { Button } from '@/components/ui/button'
 import { StarRating } from '@/components/ui/StarRating'
 import { getImagePublicUrl } from '@/lib/api/images'
@@ -38,63 +37,50 @@ interface Props {
 }
 
 export function VendorDetailPanel({ company, onClose, onEdit, onDelete }: Props) {
+  if (!company) return null
+
   return (
-    <AnimatePresence>
-      {company && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            key="backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.18 }}
-            onClick={onClose}
-            className="fixed inset-0 z-40 bg-black/20"
-          />
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        className="fixed inset-0 z-40 bg-black/20"
+        style={{ animation: 'fade-in 180ms ease forwards' }}
+      />
 
-          {/* Slide-over panel */}
-          <motion.aside
-            key="panel"
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed right-0 top-0 bottom-0 z-50 flex w-full max-w-md flex-col border-l border-border bg-card shadow-2xl"
+      {/* Slide-over panel */}
+      <aside
+        className="fixed right-0 top-0 bottom-0 z-50 flex w-full max-w-md flex-col border-l border-border bg-card shadow-2xl"
+        style={{ animation: 'slide-in-right 280ms cubic-bezier(0.32, 0.72, 0, 1) forwards' }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-border px-5 py-4 shrink-0">
+          <h2 className="font-semibold text-base">Vendor Details</h2>
+          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close panel" className="h-8 w-8 cursor-pointer">
+            <X size={15} />
+          </Button>
+        </div>
+
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto">
+          <PanelBody company={company} />
+        </div>
+
+        {/* Footer actions */}
+        <div className="flex gap-3 border-t border-border px-5 py-4 shrink-0">
+          <Button className="flex-1 cursor-pointer gap-2" onClick={() => { onEdit(company); onClose() }}>
+            <Pencil size={13} /> Edit
+          </Button>
+          <Button
+            variant="outline"
+            className="flex-1 cursor-pointer gap-2 text-destructive border-destructive/30 hover:bg-destructive/10"
+            onClick={() => { onDelete(company); onClose() }}
           >
-            {/* Panel header */}
-            <div className="flex items-center justify-between border-b border-border px-5 py-4 shrink-0">
-              <h2 className="font-semibold text-base">Vendor Details</h2>
-              <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close" className="h-8 w-8 cursor-pointer">
-                <X size={15} />
-              </Button>
-            </div>
-
-            {/* Scrollable body */}
-            <div className="flex-1 overflow-y-auto">
-              <PanelBody company={company} />
-            </div>
-
-            {/* Footer */}
-            <div className="flex gap-3 border-t border-border px-5 py-4 shrink-0">
-              <Button
-                className="flex-1 cursor-pointer gap-2"
-                onClick={() => { onEdit(company); onClose() }}
-              >
-                <Pencil size={13} /> Edit
-              </Button>
-              <Button
-                variant="outline"
-                className="flex-1 cursor-pointer gap-2 text-destructive border-destructive/30 hover:bg-destructive/10"
-                onClick={() => { onDelete(company); onClose() }}
-              >
-                <Trash2 size={13} /> Delete
-              </Button>
-            </div>
-          </motion.aside>
-        </>
-      )}
-    </AnimatePresence>
+            <Trash2 size={13} /> Delete
+          </Button>
+        </div>
+      </aside>
+    </>
   )
 }
 
@@ -106,7 +92,7 @@ function PanelBody({ company }: { company: Company }) {
 
   return (
     <>
-      {/* Hero image or status banner */}
+      {/* Hero */}
       <div className={cn('relative flex h-44 items-center justify-center overflow-hidden', imageUrl ? 'bg-muted' : bannerBg[company.status])}>
         {imageUrl
           ? <Image src={imageUrl} alt={company.name} fill className="object-cover" />
@@ -118,9 +104,7 @@ function PanelBody({ company }: { company: Company }) {
         {/* Name + badges */}
         <div>
           <h3 className="text-xl font-semibold leading-snug">{company.name}</h3>
-          {company.purpose && (
-            <p className="mt-0.5 text-sm text-muted-foreground">{company.purpose}</p>
-          )}
+          {company.purpose && <p className="mt-0.5 text-sm text-muted-foreground">{company.purpose}</p>}
           <div className="mt-2 flex flex-wrap gap-2">
             <span className={cn('inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium', statusPill[company.status])}>
               {statusLabel[company.status]}
@@ -135,12 +119,8 @@ function PanelBody({ company }: { company: Company }) {
 
         {/* Website */}
         {company.website_url && (
-          <a
-            href={company.website_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 text-sm font-medium text-primary hover:underline"
-          >
+          <a href={company.website_url} target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-2 text-sm font-medium text-primary hover:underline">
             <Globe size={14} className="shrink-0" />
             {getHostname(company.website_url)}
             <ExternalLink size={11} className="text-muted-foreground" />
@@ -177,9 +157,7 @@ function PanelBody({ company }: { company: Company }) {
           <div className="space-y-2 rounded-lg border border-border bg-muted/30 px-4 py-3">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Hire Details</p>
             {company.work_rating != null && <StarRating value={company.work_rating} readOnly size="sm" />}
-            {company.hire_date && (
-              <p className="text-xs text-muted-foreground">Hired: {formatDate(company.hire_date)}</p>
-            )}
+            {company.hire_date && <p className="text-xs text-muted-foreground">Hired: {formatDate(company.hire_date)}</p>}
             {willHire && (
               <div className={cn('flex items-center gap-1.5 text-xs font-medium', willHire.cls)}>
                 <willHire.Icon size={13} />{willHire.label}
