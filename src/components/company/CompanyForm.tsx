@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
+import { Loader2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -239,6 +240,7 @@ export function CompanyForm({ defaultValues, onSubmit, isSubmitting }: CompanyFo
       </div>
 
       <Button type="submit" disabled={isSubmitting} className="w-full">
+        {isSubmitting && <Loader2 size={15} className="animate-spin" />}
         {isSubmitting ? 'Saving…' : defaultValues ? 'Save Changes' : 'Add Company'}
       </Button>
     </form>

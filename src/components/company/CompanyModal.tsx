@@ -1,6 +1,7 @@
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
@@ -27,6 +28,11 @@ export function CompanyModal({
       <DialogContent className="max-h-[92vh] max-w-xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{company ? 'Edit Company' : 'Add Company'}</DialogTitle>
+          <DialogDescription>
+            {company
+              ? `Update details for ${company.name}.`
+              : 'Fill in the details to add a new vendor or company.'}
+          </DialogDescription>
         </DialogHeader>
         <CompanyForm
           defaultValues={company}

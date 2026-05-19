@@ -133,7 +133,8 @@ export function CategorySelect({ status, value, onChange }: CategorySelectProps)
             variant="ghost"
             className={cn('shrink-0', managing && 'text-primary bg-primary/10')}
             onClick={() => { setManaging(m => !m); setCreating(false) }}
-            title="Manage categories"
+            aria-label="Manage categories"
+            aria-pressed={managing}
           >
             <Settings size={15} />
           </Button>
@@ -206,6 +207,7 @@ export function CategorySelect({ status, value, onChange }: CategorySelectProps)
                     variant="ghost"
                     className="h-7 w-7 shrink-0"
                     onClick={() => { setEditingId(cat.id); setEditName(cat.name) }}
+                    aria-label={`Rename ${cat.name}`}
                   >
                     <Pencil size={13} />
                   </Button>
@@ -215,6 +217,7 @@ export function CategorySelect({ status, value, onChange }: CategorySelectProps)
                     variant="ghost"
                     className="h-7 w-7 shrink-0 text-destructive hover:text-destructive"
                     onClick={() => handleDelete(cat)}
+                    aria-label={`Delete ${cat.name}`}
                   >
                     <Trash2 size={13} />
                   </Button>

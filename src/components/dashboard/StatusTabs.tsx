@@ -40,7 +40,7 @@ export function StatusTabs({ active, onChange, counts }: StatusTabsProps) {
           aria-pressed={active === tab.status}
           aria-label={`${tab.label} — ${counts[tab.status]} companies`}
           className={cn(
-            'flex shrink-0 cursor-pointer items-center gap-2 px-5 py-2 text-sm font-medium rounded-xl transition-all duration-200',
+            'flex shrink-0 cursor-pointer items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-xl transition-all duration-200',
             active === tab.status
               ? tab.activeClass
               : 'text-muted-foreground hover:text-foreground hover:bg-purple-50',

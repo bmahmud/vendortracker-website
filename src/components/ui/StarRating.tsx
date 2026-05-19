@@ -12,15 +12,16 @@ interface StarRatingProps {
 export function StarRating({ value, onChange, readOnly = false, size = 'md' }: StarRatingProps) {
   const px = size === 'sm' ? 14 : 20
   return (
-    <div className="flex gap-0.5">
+    <div className="flex gap-0.5" role="group" aria-label="Work rating">
       {[1, 2, 3, 4, 5].map(star => (
         <button
           key={star}
           type="button"
           onClick={() => !readOnly && onChange?.(star)}
           disabled={readOnly}
+          aria-label={`${star} star${star > 1 ? 's' : ''}`}
           className={cn(
-            'transition-transform focus:outline-none',
+            'rounded-sm transition-transform focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none',
             !readOnly && 'cursor-pointer hover:scale-110',
             readOnly && 'cursor-default',
           )}
