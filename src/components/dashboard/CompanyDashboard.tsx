@@ -7,6 +7,7 @@ import { Sidebar } from './Sidebar'
 import { VendorList } from './VendorList'
 import { CompanyModal } from '@/components/company/CompanyModal'
 import { DeleteConfirmDialog } from '@/components/company/DeleteConfirmDialog'
+import { VendorDetailPanel } from '@/components/company/VendorDetailPanel'
 import { useCompanies, useStatusCounts } from '@/hooks/useCompanies'
 import { useCompanyMutations } from '@/hooks/useCompanyMutations'
 import { getAllCategories } from '@/lib/api/categories'
@@ -27,6 +28,7 @@ export function CompanyDashboard() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingCompany, setEditingCompany] = useState<Company | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Company | null>(null)
+  const [selectedVendor, setSelectedVendor] = useState<Company | null>(null)
   const [categories, setCategories] = useState<Category[]>([])
 
   const { companies, loading, refetch } = useCompanies(activeStatus)
@@ -186,11 +188,20 @@ export function CompanyDashboard() {
           <VendorList
             companies={filtered}
             loading={loading}
+            onVendorClick={setSelectedVendor}
             onEdit={openEdit}
             onDelete={setDeleteTarget}
           />
         </main>
       </div>
+
+      {/* Vendor detail slide-over */}
+      <VendorDetailPanel
+        company={selectedVendor}
+        onClose={() => setSelectedVendor(null)}
+        onEdit={c => { setSelectedVendor(null); openEdit(c) }}
+        onDelete={c => { setSelectedVendor(null); setDeleteTarget(c) }}
+      />
 
       {/* Modals */}
       <CompanyModal
