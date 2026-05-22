@@ -110,7 +110,16 @@ export function CompanyDashboard() {
         <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border bg-background/95 backdrop-blur-sm px-4 py-3 sm:px-6">
           {/* Breadcrumb — desktop */}
           <nav className="hidden lg:flex items-center gap-1.5 text-sm text-muted-foreground shrink-0">
-            <span>Home</span>
+            {activeStatus !== 'all' || activeCategoryName !== null || searchQuery ? (
+              <button
+                onClick={() => { handleStatusChange('all'); setSearchQuery('') }}
+                className="hover:text-foreground transition-colors cursor-pointer"
+              >
+                Home
+              </button>
+            ) : (
+              <span>Home</span>
+            )}
             <span>/</span>
             <span className="font-semibold text-foreground">{statusPageTitle[activeStatus]}</span>
           </nav>

@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { Loader2, PackageSearch, Pencil, Trash2, Globe } from 'lucide-react'
+import { Loader2, PackageSearch, Pencil, Trash2, Globe, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { StarRating } from '@/components/ui/StarRating'
 import { parseLinkBlock, getHostname, cn } from '@/lib/utils'
@@ -19,8 +19,59 @@ const statusPill: Record<string, string> = {
 const statusLabel: Record<string, string> = {
   hired: 'Hired', to_hire: 'Potential', do_not_hire: 'Do Not Hire',
 }
+const statusOrder: Record<string, number> = { hired: 0, to_hire: 1, do_not_hire: 2 }
 
 const COL = 'minmax(0,2fr) minmax(0,1fr) 130px 96px 120px 72px'
+
+type SortCol = 'name' | 'category' | 'status' | 'price'
+type SortDir = 'asc' | 'desc'
+
+function extractPrice(price: string | null): number {
+  if (!price) return Infinity
+  const m = price.match(/[\d,]+\.?\d*/)
+  return m ? parseFloat(m[0].replace(/,/g, '')) : Infinity
+}
+
+function sortCompanies(list: Company[], col: SortCol | null, dir: SortDir): Company[] {
+  if (!col) return list
+  return [...list].sort((a, b) => {
+    let cmp = 0
+    if (col === 'name') {
+      cmp = a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+    } else if (col === 'category') {
+      const ca = a.category?.name.toLowerCase() ?? '￿'
+      const cb = b.category?.name.toLowerCase() ?? '￿'
+      cmp = ca.localeCompare(cb)
+    } else if (col === 'status') {
+      cmp = (statusOrder[a.status] ?? 0) - (statusOrder[b.status] ?? 0)
+    } else if (col === 'price') {
+      cmp = extractPrice(a.price) - extractPrice(b.price)
+    }
+    return dir === 'asc' ? cmp : -cmp
+  })
+}
+
+function SortHeader({
+  col, label, sortCol, sortDir, onSort,
+}: {
+  col: SortCol; label: string; sortCol: SortCol | null; sortDir: SortDir
+  onSort: (c: SortCol) => void
+}) {
+  const active = sortCol === col
+  const Icon = active ? (sortDir === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown
+  return (
+    <button
+      onClick={() => onSort(col)}
+      className={cn(
+        'flex items-center gap-1 cursor-pointer transition-colors select-none',
+        active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
+      )}
+    >
+      {label}
+      <Icon size={11} className={cn('shrink-0', !active && 'opacity-40')} />
+    </button>
+  )
+}
 
 interface Tooltip { text: string; x: number; y: number }
 
@@ -33,7 +84,18 @@ interface VendorListProps {
 }
 
 export function VendorList({ companies, loading, onVendorClick, onEdit, onDelete }: VendorListProps) {
+  const [sortCol, setSortCol] = useState<SortCol | null>(null)
+  const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [tooltip, setTooltip] = useState<Tooltip | null>(null)
+
+  function handleSort(col: SortCol) {
+    if (sortCol === col) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortCol(col)
+      setSortDir('asc')
+    }
+  }
 
   if (loading) {
     return (
@@ -52,26 +114,28 @@ export function VendorList({ companies, loading, onVendorClick, onEdit, onDelete
     )
   }
 
+  const sorted = sortCompanies(companies, sortCol, sortDir)
+
   return (
     <>
       <div className="rounded-xl border border-border bg-card">
         {/* Table header */}
         <div
-          className="hidden md:grid items-center rounded-t-xl border-b border-border bg-muted/40 px-6 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+          className="hidden md:grid items-center rounded-t-xl border-b border-border bg-muted/40 px-6 py-3 text-[11px] font-semibold uppercase tracking-wider"
           style={{ gridTemplateColumns: COL }}
         >
-          <div>Vendor</div>
-          <div>Category</div>
-          <div>Status</div>
-          <div>Price</div>
-          <div>Rating</div>
+          <SortHeader col="name"     label="Vendor"   sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
+          <SortHeader col="category" label="Category" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
+          <SortHeader col="status"   label="Status"   sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
+          <SortHeader col="price"    label="Price"    sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
+          <div className="text-muted-foreground">Rating</div>
           <div />
         </div>
 
         {/* Rows */}
-        {companies.map((company, i) => {
+        {sorted.map((company, i) => {
           const { freeText: notesText } = parseLinkBlock(company.notes)
-          const isLast = i === companies.length - 1
+          const isLast = i === sorted.length - 1
 
           return (
             <div
@@ -83,9 +147,8 @@ export function VendorList({ companies, loading, onVendorClick, onEdit, onDelete
               )}
               style={{ gridTemplateColumns: COL }}
             >
-              {/* Vendor column */}
+              {/* Vendor */}
               <div className="flex min-w-0 flex-1 items-center gap-3 md:flex-none">
-                {/* Avatar */}
                 <div className={cn(
                   'flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold',
                   avatarBg[company.status],
@@ -94,7 +157,6 @@ export function VendorList({ companies, loading, onVendorClick, onEdit, onDelete
                 </div>
 
                 <div className="min-w-0">
-                  {/* Name row: clickable name + website icon */}
                   <div className="flex items-center gap-1.5 min-w-0">
                     <button
                       onClick={() => onVendorClick(company)}
@@ -179,7 +241,7 @@ export function VendorList({ companies, loading, onVendorClick, onEdit, onDelete
         })}
       </div>
 
-      {/* Fixed-position notes tooltip — escapes any overflow:hidden parent */}
+      {/* Fixed-position notes tooltip */}
       {tooltip && (
         <div
           className="pointer-events-none fixed z-50 w-64 max-w-xs rounded-lg border border-border bg-card px-3 py-2.5 text-xs text-muted-foreground shadow-lg"
