@@ -1,8 +1,13 @@
 'use client'
 import { useState, useCallback, useEffect, useMemo } from 'react'
-import { Plus, Search } from 'lucide-react'
+import { Plus, Search, Pencil, Trash2, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+  Dialog, DialogContent, DialogDescription,
+  DialogFooter, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog'
+import { toast } from 'sonner'
 import { Sidebar } from './Sidebar'
 import { VendorList } from './VendorList'
 import { CompanyModal } from '@/components/company/CompanyModal'
@@ -10,7 +15,7 @@ import { DeleteConfirmDialog } from '@/components/company/DeleteConfirmDialog'
 import { VendorDetailPanel } from '@/components/company/VendorDetailPanel'
 import { useCompanies, useStatusCounts } from '@/hooks/useCompanies'
 import { useCompanyMutations } from '@/hooks/useCompanyMutations'
-import { getAllCategories } from '@/lib/api/categories'
+import { getAllCategories, updateCategory, deleteCategory, getVendorCountForCategory } from '@/lib/api/categories'
 import { cn } from '@/lib/utils'
 import type { Company, CompanyFormValues, ActiveStatus, Category } from '@/types'
 
@@ -31,6 +36,13 @@ export function CompanyDashboard() {
   const [selectedVendor, setSelectedVendor] = useState<Company | null>(null)
   const [categories, setCategories] = useState<Category[]>([])
 
+  // Category chip management
+  const [renamingCatId, setRenamingCatId] = useState<string | null>(null)
+  const [renameName, setRenameName] = useState('')
+  const [deleteCatTarget, setDeleteCatTarget] = useState<Category | null>(null)
+  const [deleteCatVendorCount, setDeleteCatVendorCount] = useState<number | null>(null)
+  const [deleteCatLoading, setDeleteCatLoading] = useState(false)
+
   const { companies, loading, refetch } = useCompanies(activeStatus)
   const { counts, refetch: refetchCounts } = useStatusCounts()
 
@@ -48,13 +60,55 @@ export function CompanyDashboard() {
 
   const { create, update, remove, isSubmitting } = useCompanyMutations(handleSuccess)
 
-  // When status changes, clear category filter
   function handleStatusChange(s: ActiveStatus) {
     setActiveStatus(s)
     setActiveCategoryName(null)
   }
 
-  // Deduplicate category chips by name (so same-named categories across statuses show once)
+  // --- Category chip rename ---
+  async function handleCategoryRename(cat: Category) {
+    const name = renameName.trim()
+    setRenamingCatId(null)
+    if (!name || name === cat.name) return
+    try {
+      await updateCategory(cat.id, name)
+      if (activeCategoryName === cat.name) setActiveCategoryName(name)
+      fetchCategories()
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to rename category')
+    }
+  }
+
+  // --- Category chip delete ---
+  async function startCategoryDelete(cat: Category) {
+    setDeleteCatTarget(cat)
+    setDeleteCatVendorCount(null)
+    try {
+      const count = await getVendorCountForCategory(cat.id)
+      setDeleteCatVendorCount(count)
+    } catch {
+      setDeleteCatVendorCount(0)
+    }
+  }
+
+  async function handleCategoryDeleteConfirm() {
+    if (!deleteCatTarget) return
+    setDeleteCatLoading(true)
+    try {
+      await deleteCategory(deleteCatTarget.id, true)
+      if (activeCategoryName === deleteCatTarget.name) setActiveCategoryName(null)
+      toast.success(`Category "${deleteCatTarget.name}" deleted`)
+      setDeleteCatTarget(null)
+      setDeleteCatVendorCount(null)
+      handleSuccess()
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to delete category')
+    } finally {
+      setDeleteCatLoading(false)
+    }
+  }
+
+  // Deduplicate category chips by name
   const visibleCategories = useMemo(() => {
     const base = activeStatus === 'all'
       ? categories
@@ -163,7 +217,7 @@ export function CompanyDashboard() {
           {/* Category chips */}
           {visibleCategories.length > 0 && (
             <div className="mb-5 rounded-xl border border-border bg-card px-4 py-3.5">
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 items-center">
                 <button
                   onClick={() => setActiveCategoryName(null)}
                   className={cn(
@@ -175,20 +229,74 @@ export function CompanyDashboard() {
                 >
                   All
                 </button>
-                {visibleCategories.map(cat => (
-                  <button
-                    key={cat.id}
-                    onClick={() => setActiveCategoryName(activeCategoryName === cat.name ? null : cat.name)}
-                    className={cn(
-                      'rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-150 cursor-pointer',
-                      activeCategoryName === cat.name
-                        ? 'bg-foreground text-background'
-                        : 'border border-border bg-transparent hover:bg-muted text-foreground',
-                    )}
-                  >
-                    {cat.name}
-                  </button>
-                ))}
+
+                {visibleCategories.map(cat => {
+                  const isActive = activeCategoryName === cat.name
+                  const isRenaming = renamingCatId === cat.id
+
+                  if (isRenaming) {
+                    return (
+                      <div key={cat.id} className="flex items-center gap-1">
+                        <input
+                          autoFocus
+                          value={renameName}
+                          onChange={e => setRenameName(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') { e.preventDefault(); handleCategoryRename(cat) }
+                            if (e.key === 'Escape') setRenamingCatId(null)
+                          }}
+                          className="w-32 rounded-full border border-input bg-background px-3 py-1 text-sm outline-none focus:ring-2 focus:ring-ring"
+                        />
+                        <button
+                          onClick={() => handleCategoryRename(cat)}
+                          className="flex h-6 w-6 items-center justify-center rounded-full hover:bg-muted cursor-pointer text-foreground"
+                          aria-label="Confirm rename"
+                        >
+                          <Check size={12} />
+                        </button>
+                        <button
+                          onClick={() => setRenamingCatId(null)}
+                          className="flex h-6 w-6 items-center justify-center rounded-full hover:bg-muted cursor-pointer text-muted-foreground"
+                          aria-label="Cancel rename"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    )
+                  }
+
+                  return (
+                    <div key={cat.id} className="group flex items-center gap-0.5">
+                      <button
+                        onClick={() => setActiveCategoryName(isActive ? null : cat.name)}
+                        className={cn(
+                          'rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-150 cursor-pointer',
+                          isActive
+                            ? 'bg-foreground text-background'
+                            : 'border border-border bg-transparent hover:bg-muted text-foreground',
+                        )}
+                      >
+                        {cat.name}
+                      </button>
+                      <div className="hidden group-hover:flex items-center gap-0.5 ml-0.5">
+                        <button
+                          onClick={() => { setRenamingCatId(cat.id); setRenameName(cat.name) }}
+                          className="flex h-5 w-5 items-center justify-center rounded-full hover:bg-muted cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
+                          aria-label={`Rename ${cat.name}`}
+                        >
+                          <Pencil size={10} />
+                        </button>
+                        <button
+                          onClick={() => startCategoryDelete(cat)}
+                          className="flex h-5 w-5 items-center justify-center rounded-full hover:bg-destructive/10 cursor-pointer text-muted-foreground hover:text-destructive transition-colors"
+                          aria-label={`Delete ${cat.name}`}
+                        >
+                          <Trash2 size={10} />
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}
@@ -212,7 +320,47 @@ export function CompanyDashboard() {
         onDelete={c => { setSelectedVendor(null); setDeleteTarget(c) }}
       />
 
-      {/* Modals */}
+      {/* Category delete confirmation dialog */}
+      <Dialog open={!!deleteCatTarget} onOpenChange={v => !v && setDeleteCatTarget(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Delete Category</DialogTitle>
+            <DialogDescription>
+              {deleteCatVendorCount === null
+                ? 'Checking vendors in this category…'
+                : deleteCatVendorCount > 0
+                  ? <>
+                      Deleting <strong>{deleteCatTarget?.name}</strong> will also permanently delete{' '}
+                      <strong>{deleteCatVendorCount} vendor{deleteCatVendorCount !== 1 ? 's' : ''}</strong>{' '}
+                      assigned to it. This cannot be undone.
+                    </>
+                  : <>
+                      Are you sure you want to delete <strong>{deleteCatTarget?.name}</strong>?{' '}
+                      This cannot be undone.
+                    </>
+              }
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteCatTarget(null)}
+              disabled={deleteCatLoading || deleteCatVendorCount === null}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleCategoryDeleteConfirm}
+              disabled={deleteCatLoading || deleteCatVendorCount === null}
+            >
+              {deleteCatLoading ? 'Deleting…' : 'Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Vendor modals */}
       <CompanyModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}

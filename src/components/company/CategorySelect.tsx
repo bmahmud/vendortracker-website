@@ -1,10 +1,13 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { Plus, X, Settings, Pencil, Trash2, Check } from 'lucide-react'
+import { Plus, X, Settings, Pencil, Trash2, Check, Loader2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { getAllCategories, createCategory, updateCategory, deleteCategory } from '@/lib/api/categories'
+import {
+  getAllCategories, createCategory, updateCategory,
+  deleteCategory, getVendorCountForCategory,
+} from '@/lib/api/categories'
 import { cn } from '@/lib/utils'
 import type { Category, CompanyStatus } from '@/types'
 
@@ -31,6 +34,8 @@ export function CategorySelect({ status, value, onChange }: CategorySelectProps)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [fetchError, setFetchError] = useState<string | null>(null)
+  const [confirmingDelete, setConfirmingDelete] = useState<{ cat: Category; count: number | null } | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -82,13 +87,29 @@ export function CategorySelect({ status, value, onChange }: CategorySelectProps)
     }
   }
 
-  async function handleDelete(cat: Category) {
+  async function startConfirmDelete(cat: Category) {
+    setConfirmingDelete({ cat, count: null })
     try {
-      await deleteCategory(cat.id)
-      setCategories(prev => prev.filter(c => c.id !== cat.id))
-      if (value === cat.id) onChange(null)
+      const count = await getVendorCountForCategory(cat.id)
+      setConfirmingDelete(prev => prev?.cat.id === cat.id ? { ...prev, count } : prev)
+    } catch {
+      setConfirmingDelete(prev => prev?.cat.id === cat.id ? { ...prev, count: 0 } : prev)
+    }
+  }
+
+  async function executeDelete() {
+    if (!confirmingDelete) return
+    setDeleteLoading(true)
+    try {
+      await deleteCategory(confirmingDelete.cat.id, true)
+      setCategories(prev => prev.filter(c => c.id !== confirmingDelete.cat.id))
+      if (value === confirmingDelete.cat.id) onChange(null)
+      setConfirmingDelete(null)
+      toast.success(`Category "${confirmingDelete.cat.name}" deleted`)
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to delete category')
+    } finally {
+      setDeleteLoading(false)
     }
   }
 
@@ -132,7 +153,7 @@ export function CategorySelect({ status, value, onChange }: CategorySelectProps)
             size="icon"
             variant="ghost"
             className={cn('shrink-0', managing && 'text-primary bg-primary/10')}
-            onClick={() => { setManaging(m => !m); setCreating(false) }}
+            onClick={() => { setManaging(m => !m); setCreating(false); setConfirmingDelete(null) }}
             aria-label="Manage categories"
             aria-pressed={managing}
           >
@@ -177,54 +198,96 @@ export function CategorySelect({ status, value, onChange }: CategorySelectProps)
       {managing && !creating && (
         <div className="rounded-lg border border-border bg-background p-2 space-y-1">
           <p className="text-xs font-medium text-muted-foreground px-1 pb-1">Manage categories</p>
-          {filtered.map(cat => (
-            <div key={cat.id} className="flex items-center gap-1">
-              {editingId === cat.id ? (
-                <>
-                  <Input
-                    value={editName}
-                    onChange={e => setEditName(e.target.value)}
-                    className="h-7 text-sm flex-1"
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') { e.preventDefault(); handleRename(cat.id) }
-                      if (e.key === 'Escape') setEditingId(null)
-                    }}
-                    autoFocus
-                  />
-                  <Button type="button" size="icon" className="h-7 w-7 shrink-0" onClick={() => handleRename(cat.id)}>
-                    <Check size={13} />
-                  </Button>
-                  <Button type="button" size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => setEditingId(null)}>
-                    <X size={13} />
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <span className="flex-1 truncate text-sm px-1">{cat.name}</span>
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    className="h-7 w-7 shrink-0"
-                    onClick={() => { setEditingId(cat.id); setEditName(cat.name) }}
-                    aria-label={`Rename ${cat.name}`}
-                  >
-                    <Pencil size={13} />
-                  </Button>
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    className="h-7 w-7 shrink-0 text-destructive hover:text-destructive"
-                    onClick={() => handleDelete(cat)}
-                    aria-label={`Delete ${cat.name}`}
-                  >
-                    <Trash2 size={13} />
-                  </Button>
-                </>
-              )}
-            </div>
-          ))}
+          {filtered.map(cat => {
+            const isConfirming = confirmingDelete?.cat.id === cat.id
+
+            if (isConfirming) {
+              const { count } = confirmingDelete!
+              return (
+                <div key={cat.id} className="rounded-md bg-destructive/8 border border-destructive/20 px-2 py-2 space-y-1.5">
+                  <p className="text-xs text-destructive">
+                    {count === null
+                      ? <span className="flex items-center gap-1"><Loader2 size={11} className="animate-spin" /> Checking vendors…</span>
+                      : count > 0
+                        ? <>Delete <strong>{cat.name}</strong>? This will also permanently delete <strong>{count} vendor{count !== 1 ? 's' : ''}</strong>.</>
+                        : <>Delete <strong>{cat.name}</strong>? This cannot be undone.</>
+                    }
+                  </p>
+                  <div className="flex gap-1.5">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="destructive"
+                      className="h-6 text-xs px-2.5"
+                      onClick={executeDelete}
+                      disabled={count === null || deleteLoading}
+                    >
+                      {deleteLoading ? <Loader2 size={11} className="animate-spin" /> : 'Delete'}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-6 text-xs px-2.5"
+                      onClick={() => setConfirmingDelete(null)}
+                      disabled={deleteLoading}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )
+            }
+
+            return (
+              <div key={cat.id} className="flex items-center gap-1">
+                {editingId === cat.id ? (
+                  <>
+                    <Input
+                      value={editName}
+                      onChange={e => setEditName(e.target.value)}
+                      className="h-7 text-sm flex-1"
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') { e.preventDefault(); handleRename(cat.id) }
+                        if (e.key === 'Escape') setEditingId(null)
+                      }}
+                      autoFocus
+                    />
+                    <Button type="button" size="icon" className="h-7 w-7 shrink-0" onClick={() => handleRename(cat.id)}>
+                      <Check size={13} />
+                    </Button>
+                    <Button type="button" size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => setEditingId(null)}>
+                      <X size={13} />
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <span className="flex-1 truncate text-sm px-1">{cat.name}</span>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 shrink-0"
+                      onClick={() => { setEditingId(cat.id); setEditName(cat.name) }}
+                      aria-label={`Rename ${cat.name}`}
+                    >
+                      <Pencil size={13} />
+                    </Button>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 shrink-0 text-destructive hover:text-destructive"
+                      onClick={() => startConfirmDelete(cat)}
+                      aria-label={`Delete ${cat.name}`}
+                    >
+                      <Trash2 size={13} />
+                    </Button>
+                  </>
+                )}
+              </div>
+            )
+          })}
         </div>
       )}
     </div>

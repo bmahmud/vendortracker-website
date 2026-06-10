@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Loader2, PackageSearch, Pencil, Trash2, Globe, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { StarRating } from '@/components/ui/StarRating'
@@ -21,10 +21,16 @@ const statusLabel: Record<string, string> = {
 }
 const statusOrder: Record<string, number> = { hired: 0, to_hire: 1, do_not_hire: 2 }
 
-const COL = 'minmax(0,2fr) minmax(0,1fr) 130px 96px 120px 72px'
-
 type SortCol = 'name' | 'category' | 'status' | 'price'
 type SortDir = 'asc' | 'desc'
+type ColKey = 'name' | 'category' | 'status' | 'price' | 'rating'
+
+const DEFAULT_WIDTHS: Record<ColKey, number> = {
+  name: 260, category: 150, status: 130, price: 96, rating: 120,
+}
+const MIN_WIDTHS: Record<ColKey, number> = {
+  name: 80, category: 70, status: 100, price: 70, rating: 80,
+}
 
 function extractPrice(price: string | null): number {
   if (!price) return Infinity
@@ -73,6 +79,28 @@ function SortHeader({
   )
 }
 
+function ResizeHandle({ col, onResize }: { col: ColKey; onResize: (col: ColKey, delta: number) => void }) {
+  const lastX = useRef<number | null>(null)
+  return (
+    <div
+      className="absolute right-0 top-0 h-full w-3 cursor-col-resize z-10 flex items-center justify-center group/rh select-none"
+      onPointerDown={e => {
+        e.preventDefault()
+        lastX.current = e.clientX
+        ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
+      }}
+      onPointerMove={e => {
+        if (lastX.current === null || !e.buttons) return
+        onResize(col, e.clientX - lastX.current)
+        lastX.current = e.clientX
+      }}
+      onPointerUp={() => { lastX.current = null }}
+    >
+      <div className="h-4 w-px bg-muted-foreground/40 opacity-0 group-hover/rh:opacity-100 transition-opacity" />
+    </div>
+  )
+}
+
 interface Tooltip { text: string; x: number; y: number }
 
 interface VendorListProps {
@@ -87,6 +115,7 @@ export function VendorList({ companies, loading, onVendorClick, onEdit, onDelete
   const [sortCol, setSortCol] = useState<SortCol | null>(null)
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [tooltip, setTooltip] = useState<Tooltip | null>(null)
+  const [colWidths, setColWidths] = useState<Record<ColKey, number>>(DEFAULT_WIDTHS)
 
   function handleSort(col: SortCol) {
     if (sortCol === col) {
@@ -96,6 +125,15 @@ export function VendorList({ companies, loading, onVendorClick, onEdit, onDelete
       setSortDir('asc')
     }
   }
+
+  function handleResize(col: ColKey, delta: number) {
+    setColWidths(prev => ({
+      ...prev,
+      [col]: Math.max(MIN_WIDTHS[col], prev[col] + delta),
+    }))
+  }
+
+  const gridTemplate = `${colWidths.name}px ${colWidths.category}px ${colWidths.status}px ${colWidths.price}px ${colWidths.rating}px 72px`
 
   if (loading) {
     return (
@@ -118,17 +156,32 @@ export function VendorList({ companies, loading, onVendorClick, onEdit, onDelete
 
   return (
     <>
-      <div className="rounded-xl border border-border bg-card">
+      <div className="rounded-xl border border-border bg-card overflow-x-auto">
         {/* Table header */}
         <div
           className="hidden md:grid items-center rounded-t-xl border-b border-border bg-muted/40 px-6 py-3 text-[11px] font-semibold uppercase tracking-wider"
-          style={{ gridTemplateColumns: COL }}
+          style={{ gridTemplateColumns: gridTemplate }}
         >
-          <SortHeader col="name"     label="Vendor"   sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
-          <SortHeader col="category" label="Category" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
-          <SortHeader col="status"   label="Status"   sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
-          <SortHeader col="price"    label="Price"    sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
-          <div className="text-muted-foreground">Rating</div>
+          <div className="relative min-w-0">
+            <SortHeader col="name" label="Vendor" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
+            <ResizeHandle col="name" onResize={handleResize} />
+          </div>
+          <div className="relative min-w-0">
+            <SortHeader col="category" label="Category" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
+            <ResizeHandle col="category" onResize={handleResize} />
+          </div>
+          <div className="relative min-w-0">
+            <SortHeader col="status" label="Status" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
+            <ResizeHandle col="status" onResize={handleResize} />
+          </div>
+          <div className="relative min-w-0">
+            <SortHeader col="price" label="Price" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
+            <ResizeHandle col="price" onResize={handleResize} />
+          </div>
+          <div className="relative min-w-0 text-muted-foreground">
+            Rating
+            <ResizeHandle col="rating" onResize={handleResize} />
+          </div>
           <div />
         </div>
 
@@ -145,7 +198,7 @@ export function VendorList({ companies, loading, onVendorClick, onEdit, onDelete
                 !isLast && 'border-b border-border',
                 isLast && 'rounded-b-xl',
               )}
-              style={{ gridTemplateColumns: COL }}
+              style={{ gridTemplateColumns: gridTemplate }}
             >
               {/* Vendor */}
               <div className="flex min-w-0 flex-1 items-center gap-3 md:flex-none">
@@ -195,7 +248,7 @@ export function VendorList({ companies, loading, onVendorClick, onEdit, onDelete
               </div>
 
               {/* Category */}
-              <div className="hidden md:block">
+              <div className="hidden md:block min-w-0">
                 {company.category
                   ? <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">{company.category.name}</span>
                   : <span className="text-xs text-muted-foreground/40">—</span>
@@ -203,14 +256,14 @@ export function VendorList({ companies, loading, onVendorClick, onEdit, onDelete
               </div>
 
               {/* Status */}
-              <div className="hidden md:block">
+              <div className="hidden md:block min-w-0">
                 <span className={cn('inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium', statusPill[company.status])}>
                   {statusLabel[company.status]}
                 </span>
               </div>
 
               {/* Price */}
-              <div className="hidden md:block">
+              <div className="hidden md:block min-w-0">
                 {company.price
                   ? <span className="text-sm font-semibold">{company.price}</span>
                   : <span className="text-xs text-muted-foreground/40">—</span>
@@ -218,7 +271,7 @@ export function VendorList({ companies, loading, onVendorClick, onEdit, onDelete
               </div>
 
               {/* Rating */}
-              <div className="hidden md:block">
+              <div className="hidden md:block min-w-0">
                 {company.work_rating
                   ? <StarRating value={company.work_rating} readOnly size="sm" />
                   : <span className="text-xs text-muted-foreground/40">—</span>
