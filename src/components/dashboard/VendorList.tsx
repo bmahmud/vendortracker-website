@@ -209,7 +209,7 @@ export function VendorList({ companies, loading, onVendorClick, onEdit, onDelete
                   {company.name.charAt(0).toUpperCase()}
                 </div>
 
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 min-w-0">
                     <button
                       onClick={() => onVendorClick(company)}
@@ -219,7 +219,7 @@ export function VendorList({ companies, loading, onVendorClick, onEdit, onDelete
                         setTooltip({ text: notesText, x: r.left, y: r.bottom })
                       }}
                       onMouseLeave={() => setTooltip(null)}
-                      className="truncate text-sm font-semibold text-foreground hover:text-primary transition-colors cursor-pointer text-left max-w-[160px] md:max-w-[200px]"
+                      className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground hover:text-primary transition-colors cursor-pointer text-left"
                     >
                       {company.name}
                     </button>

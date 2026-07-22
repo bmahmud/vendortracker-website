@@ -79,6 +79,10 @@ export function CompanyForm({ defaultValues, onSubmit, isSubmitting }: CompanyFo
   useEffect(() => {
     if (!statusMountedRef.current) { statusMountedRef.current = true; return }
     form.setValue('category_id', null)
+    // Auto-fill hire date with today when switching to hired on a new vendor
+    if (status === 'hired' && !defaultValues && !form.getValues('hire_date')) {
+      form.setValue('hire_date', new Date().toISOString().split('T')[0])
+    }
   }, [status]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
