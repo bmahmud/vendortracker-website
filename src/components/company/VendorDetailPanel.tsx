@@ -1,8 +1,9 @@
 'use client'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import {
   X, Phone, MapPin, Globe, Tag, Pencil, Trash2,
-  ExternalLink, CheckCircle2, XCircle, HelpCircle,
+  ExternalLink, CheckCircle2, XCircle, HelpCircle, ZoomIn,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { StarRating } from '@/components/ui/StarRating'
@@ -89,16 +90,67 @@ function PanelBody({ company }: { company: Company }) {
   const firstImage = company.company_images?.[0]
   const imageUrl = firstImage ? getImagePublicUrl(firstImage.storage_path) : null
   const willHire = company.will_hire_again ? willHireCfg[company.will_hire_again] : null
+  const [zoomed, setZoomed] = useState(false)
+
+  useEffect(() => {
+    if (!zoomed) return
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setZoomed(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [zoomed])
 
   return (
     <>
       {/* Hero */}
-      <div className={cn('relative flex h-44 items-center justify-center overflow-hidden', imageUrl ? 'bg-muted' : bannerBg[company.status])}>
-        {imageUrl
-          ? <Image src={imageUrl} alt={company.name} fill className="object-cover" />
-          : <span className="text-6xl font-bold opacity-20 select-none">{company.name.charAt(0).toUpperCase()}</span>
-        }
+      <div
+        className={cn(
+          'relative flex h-52 items-center justify-center overflow-hidden',
+          imageUrl ? 'bg-muted group cursor-zoom-in' : bannerBg[company.status],
+        )}
+        onClick={() => imageUrl && setZoomed(true)}
+      >
+        {imageUrl ? (
+          <>
+            <Image
+              src={imageUrl}
+              alt={company.name}
+              fill
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/25 transition-colors">
+              <ZoomIn size={28} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+            </div>
+          </>
+        ) : (
+          <span className="text-6xl font-bold opacity-20 select-none">{company.name.charAt(0).toUpperCase()}</span>
+        )}
       </div>
+
+      {/* Lightbox */}
+      {zoomed && imageUrl && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setZoomed(false)}
+          style={{ animation: 'fade-in 150ms ease forwards' }}
+        >
+          <button
+            className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors cursor-pointer"
+            onClick={() => setZoomed(false)}
+            aria-label="Close zoom"
+          >
+            <X size={18} />
+          </button>
+          <Image
+            src={imageUrl}
+            alt={company.name}
+            width={1200}
+            height={800}
+            className="max-h-[90vh] max-w-[90vw] rounded-xl object-contain shadow-2xl"
+            onClick={e => e.stopPropagation()}
+          />
+        </div>
+      )}
+
 
       <div className="space-y-5 px-5 py-5">
         {/* Name + badges */}
