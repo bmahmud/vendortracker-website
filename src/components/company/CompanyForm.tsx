@@ -27,6 +27,7 @@ const schema = z.object({
   will_hire_again: z.enum(['yes', 'no', 'maybe', '']).default(''),
   website_url: z.string().default(''),
   price: z.string().default(''),
+  ranking: z.number().min(1).max(3).nullable().default(null),
   category_id: z.string().nullable().default(null),
   freeNotes: z.string().default(''),
   links: z.array(z.object({ url: z.string(), label: z.string() })).default([]),
@@ -65,6 +66,7 @@ export function CompanyForm({ defaultValues, onSubmit, isSubmitting }: CompanyFo
       will_hire_again: defaultValues?.will_hire_again ?? '',
       website_url: defaultValues?.website_url ?? '',
       price: defaultValues?.price ?? '',
+      ranking: defaultValues?.ranking ?? null,
       category_id: defaultValues?.category_id ?? null,
       freeNotes: parsed.freeText,
       links: parsed.links,
@@ -176,6 +178,22 @@ export function CompanyForm({ defaultValues, onSubmit, isSubmitting }: CompanyFo
           {...form.register('price')}
           placeholder="e.g. $500, £1,200/month, $75/hr"
         />
+      </div>
+
+      {/* Ranking */}
+      <div className="space-y-1.5">
+        <Label htmlFor="ranking">Contact Priority Ranking</Label>
+        <select
+          id="ranking"
+          value={form.watch('ranking') ?? ''}
+          onChange={e => form.setValue('ranking', e.target.value === '' ? null : Number(e.target.value))}
+          className={selectClass}
+        >
+          <option value="">No ranking</option>
+          <option value="1">1 — Contact first</option>
+          <option value="2">2 — Contact second</option>
+          <option value="3">3 — Contact third</option>
+        </select>
       </div>
 
       {/* Hired-only panel */}

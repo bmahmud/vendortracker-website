@@ -31,6 +31,7 @@ export interface Company {
   will_hire_again: WillHireAgain | null
   website_url: string | null
   price: string | null
+  ranking: number | null
   category_id: string | null
   category: { id: string; name: string } | null
   notes: string | null
@@ -56,6 +57,7 @@ export interface CompanyFormValues {
   will_hire_again: WillHireAgain | ''
   website_url: string
   price: string
+  ranking: number | null
   category_id: string | null
   freeNotes: string
   links: LinkItem[]

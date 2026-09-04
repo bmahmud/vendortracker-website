@@ -21,15 +21,25 @@ const statusLabel: Record<string, string> = {
 }
 const statusOrder: Record<string, number> = { hired: 0, to_hire: 1, do_not_hire: 2 }
 
-type SortCol = 'name' | 'category' | 'status' | 'price'
+type SortCol = 'name' | 'category' | 'status' | 'price' | 'ranking' | 'date'
 type SortDir = 'asc' | 'desc'
-type ColKey = 'name' | 'category' | 'status' | 'price' | 'rating'
+type ColKey = 'name' | 'category' | 'status' | 'price' | 'rating' | 'date' | 'ranking'
 
 const DEFAULT_WIDTHS: Record<ColKey, number> = {
-  name: 260, category: 150, status: 130, price: 96, rating: 120,
+  name: 220, category: 130, status: 110, price: 90, rating: 100, date: 95, ranking: 80,
 }
 const MIN_WIDTHS: Record<ColKey, number> = {
-  name: 80, category: 70, status: 100, price: 70, rating: 80,
+  name: 80, category: 70, status: 100, price: 70, rating: 80, date: 75, ranking: 65,
+}
+
+const rankingCfg: Record<number, { label: string; cls: string }> = {
+  1: { label: '1', cls: 'bg-amber-100 text-amber-800 border-amber-300' },
+  2: { label: '2', cls: 'bg-slate-100 text-slate-700 border-slate-300' },
+  3: { label: '3', cls: 'bg-orange-100 text-orange-700 border-orange-300' },
+}
+
+function formatShortDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
 function extractPrice(price: string | null): number {
@@ -52,6 +62,10 @@ function sortCompanies(list: Company[], col: SortCol | null, dir: SortDir): Comp
       cmp = (statusOrder[a.status] ?? 0) - (statusOrder[b.status] ?? 0)
     } else if (col === 'price') {
       cmp = extractPrice(a.price) - extractPrice(b.price)
+    } else if (col === 'ranking') {
+      cmp = (a.ranking ?? 99) - (b.ranking ?? 99)
+    } else if (col === 'date') {
+      cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     }
     return dir === 'asc' ? cmp : -cmp
   })
@@ -133,7 +147,7 @@ export function VendorList({ companies, loading, onVendorClick, onEdit, onDelete
     }))
   }
 
-  const gridTemplate = `${colWidths.name}px ${colWidths.category}px ${colWidths.status}px ${colWidths.price}px ${colWidths.rating}px 72px`
+  const gridTemplate = `${colWidths.name}px ${colWidths.category}px ${colWidths.status}px ${colWidths.price}px ${colWidths.rating}px ${colWidths.date}px ${colWidths.ranking}px 72px`
 
   if (loading) {
     return (
@@ -181,6 +195,14 @@ export function VendorList({ companies, loading, onVendorClick, onEdit, onDelete
           <div className="relative min-w-0 text-muted-foreground">
             Rating
             <ResizeHandle col="rating" onResize={handleResize} />
+          </div>
+          <div className="relative min-w-0">
+            <SortHeader col="date" label="Date Added" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
+            <ResizeHandle col="date" onResize={handleResize} />
+          </div>
+          <div className="relative min-w-0">
+            <SortHeader col="ranking" label="Rank" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
+            <ResizeHandle col="ranking" onResize={handleResize} />
           </div>
           <div />
         </div>
@@ -274,6 +296,21 @@ export function VendorList({ companies, loading, onVendorClick, onEdit, onDelete
               <div className="hidden md:block min-w-0">
                 {company.work_rating
                   ? <StarRating value={company.work_rating} readOnly size="sm" />
+                  : <span className="text-xs text-muted-foreground/40">—</span>
+                }
+              </div>
+
+              {/* Date Added */}
+              <div className="hidden md:block min-w-0">
+                <span className="text-xs text-muted-foreground">{formatShortDate(company.created_at)}</span>
+              </div>
+
+              {/* Ranking */}
+              <div className="hidden md:block min-w-0">
+                {company.ranking && rankingCfg[company.ranking]
+                  ? <span className={cn('inline-flex h-6 w-6 items-center justify-center rounded-full border text-xs font-bold', rankingCfg[company.ranking].cls)}>
+                      {rankingCfg[company.ranking].label}
+                    </span>
                   : <span className="text-xs text-muted-foreground/40">—</span>
                 }
               </div>
