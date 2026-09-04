@@ -71,28 +71,6 @@ function sortCompanies(list: Company[], col: SortCol | null, dir: SortDir): Comp
   })
 }
 
-function SortHeader({
-  col, label, sortCol, sortDir, onSort,
-}: {
-  col: SortCol; label: string; sortCol: SortCol | null; sortDir: SortDir
-  onSort: (c: SortCol) => void
-}) {
-  const active = sortCol === col
-  const Icon = active ? (sortDir === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown
-  return (
-    <button
-      onClick={() => onSort(col)}
-      className={cn(
-        'flex items-center gap-1 cursor-pointer transition-colors select-none',
-        active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
-      )}
-    >
-      {label}
-      <Icon size={11} className={cn('shrink-0', !active && 'opacity-40')} />
-    </button>
-  )
-}
-
 function ResizeHandle({ col, onResize }: { col: ColKey; onResize: (col: ColKey, delta: number) => void }) {
   const lastX = useRef<number | null>(null)
   return (
@@ -173,37 +151,43 @@ export function VendorList({ companies, loading, onVendorClick, onEdit, onDelete
       <div className="rounded-xl border border-border bg-card overflow-x-auto">
         {/* Table header */}
         <div
-          className="hidden md:grid items-center rounded-t-xl border-b border-border bg-muted/40 px-6 py-3 text-[11px] font-semibold uppercase tracking-wider"
+          className="hidden md:grid items-center rounded-t-xl border-b-2 border-border bg-muted/60 px-6 py-3.5 gap-4"
           style={{ gridTemplateColumns: gridTemplate }}
         >
-          <div className="relative min-w-0">
-            <SortHeader col="name" label="Vendor" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
-            <ResizeHandle col="name" onResize={handleResize} />
-          </div>
-          <div className="relative min-w-0">
-            <SortHeader col="category" label="Category" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
-            <ResizeHandle col="category" onResize={handleResize} />
-          </div>
-          <div className="relative min-w-0">
-            <SortHeader col="status" label="Status" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
-            <ResizeHandle col="status" onResize={handleResize} />
-          </div>
-          <div className="relative min-w-0">
-            <SortHeader col="price" label="Price" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
-            <ResizeHandle col="price" onResize={handleResize} />
-          </div>
-          <div className="relative min-w-0 text-muted-foreground">
-            Rating
-            <ResizeHandle col="rating" onResize={handleResize} />
-          </div>
-          <div className="relative min-w-0">
-            <SortHeader col="date" label="Date Added" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
-            <ResizeHandle col="date" onResize={handleResize} />
-          </div>
-          <div className="relative min-w-0">
-            <SortHeader col="ranking" label="Rank" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
-            <ResizeHandle col="ranking" onResize={handleResize} />
-          </div>
+          {([
+            { col: 'name',    label: 'Vendor' },
+            { col: 'category',label: 'Category' },
+            { col: 'status',  label: 'Status' },
+            { col: 'price',   label: 'Price' },
+            { col: 'rating',  label: 'Rating', noSort: true },
+            { col: 'date',    label: 'Date Added' },
+            { col: 'ranking', label: 'Rank' },
+          ] as { col: ColKey; label: string; noSort?: boolean }[]).map(({ col, label, noSort }) => (
+            <div key={col} className="relative min-w-0">
+              {noSort ? (
+                <span className="flex items-center gap-1 text-xs font-bold uppercase tracking-widest text-foreground/60 select-none">
+                  {label}
+                </span>
+              ) : (
+                <button
+                  onClick={() => handleSort(col as SortCol)}
+                  className={cn(
+                    'flex items-center gap-1 text-xs font-bold uppercase tracking-widest cursor-pointer select-none transition-colors',
+                    sortCol === col ? 'text-foreground' : 'text-foreground/50 hover:text-foreground/80',
+                  )}
+                >
+                  {label}
+                  {sortCol === col
+                    ? sortDir === 'asc'
+                      ? <ArrowUp size={10} className="shrink-0" />
+                      : <ArrowDown size={10} className="shrink-0" />
+                    : <ArrowUpDown size={10} className="shrink-0 opacity-30" />
+                  }
+                </button>
+              )}
+              <ResizeHandle col={col} onResize={handleResize} />
+            </div>
+          ))}
           <div />
         </div>
 
